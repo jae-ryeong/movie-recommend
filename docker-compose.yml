@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:latest
+    restart: always
+    container_name: movierecommend_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: movierecommend_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: 1234
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - movierecommend_network
+
+  kafka:
+    image: wurstmeister/kafka:latest
+    restart: always
+    container_name: movierecommend_kafka
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    ports:
+      - "9092:9092" # 내부에서 접근하기 위한 포트 연결
+    depends_on:
+      - zookeeper
+    networks:
+      - movierecommend_network
+
+  zookeeper:
+    image: wurstmeister/zookeeper:latest
+    restart: always
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    networks:
+      - movierecommend_network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.3
+    restart: always
+    container_name: movierecommend_elasticsearch
+    environment:
+      discovery.type: single-node         # 단일 노드 클러스터로 실행되도록 설정, 개발/테스트 환경에 적합
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"   # Elasticsearch가 사용할 Java 힙 메모리 크기를 최소/최대 512MB로 설정
+    ports:
+      - "9200:9200"  # HTTP REST API 접근을 위한 포트호스트에서 localhost:9200으로 Elasticsearch에 접근 가능
+      - "9300:9300"  # 노드 간 통신을 위한 Transport 포트(클러스터링 시 사용), 단일 노드에서는 필수는 아니지만 연결
+    networks:
+      - movierecommend_network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  movierecommend_network:
+    driver: bridge # 이 네트워크에 연결된 컨테이너들은 서로 통신 가능
