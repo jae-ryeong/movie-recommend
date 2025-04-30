@@ -1,10 +1,11 @@
 package com.project.movierecommend.domain;
 
 import jakarta.persistence.*;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.elasticsearch.annotations.Document;
 
+@Document(indexName = "movies") // Elasticsearch의 어떤 인덱스에 매핑되는지를 지정
 @Entity
 @Table(name = "movies")
 @Getter
