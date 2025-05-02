@@ -1,9 +1,9 @@
 package com.project.movierecommend.service;
 
-import com.project.movierecommend.domain.Movie;
+import com.project.movierecommend.domain.MovieEntity;
 import com.project.movierecommend.domain.Rating;
-import com.project.movierecommend.repository.MovieRepository;
-import com.project.movierecommend.repository.RatingRepository;
+import com.project.movierecommend.repository.jpa.MovieEntityRepository;
+import com.project.movierecommend.repository.jpa.RatingRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -20,7 +20,7 @@ public class MovieLensCsvLoader implements CommandLineRunner {
     2. 애플리케이션 시작 시점에 한 번 실행해야 하는 초기화 작업, 데이터 로딩 등에 유용하게 사용
      */
 
-    private final MovieRepository movieRepository;
+    private final MovieEntityRepository movieEntityRepository;
     private final RatingRepository ratingRepository;
 
     @Override
@@ -47,8 +47,8 @@ public class MovieLensCsvLoader implements CommandLineRunner {
                     String title = parts[1].replace("\"", "");
                     String genres = parts[2];
 
-                    Movie movie = new Movie(movieId, title, genres);
-                    movieRepository.save(movie);
+                    MovieEntity movieEntity = new MovieEntity(movieId, title, genres);
+                    movieEntityRepository.save(movieEntity);
                 }
             }
         }

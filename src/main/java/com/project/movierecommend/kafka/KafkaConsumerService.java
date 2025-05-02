@@ -1,7 +1,7 @@
 package com.project.movierecommend.kafka;
 
-import com.project.movierecommend.domain.Movie;
-import com.project.movierecommend.repository.MovieSearchRepository;
+import com.project.movierecommend.domain.MovieDocument;
+import com.project.movierecommend.repository.elasticsearch.MovieSearchRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -21,9 +21,9 @@ public class KafkaConsumerService {
         이 컨슈머가 속한 컨슈머 그룹의 ID를 지정
      */
     @KafkaListener(topics = "movie-info", groupId = "movie-group")
-    public void consumeMovie(Movie movie) {
-        log.info("Consumed movie from Kafka: {}", movie.getTitle());
-        movieSearchRepository.save(movie);  //  Elasticsearch 인덱스에 문서를 저장
-        log.info("Indexed movie into Elasticsearch: {}", movie.getTitle());
+    public void consumeMovie(MovieDocument movieDocument) {
+        log.info("Consumed movie from Kafka: {}", movieDocument.getTitle());
+        movieSearchRepository.save(movieDocument);  //  Elasticsearch 인덱스에 문서를 저장
+        log.info("Indexed movie into Elasticsearch: {}", movieDocument.getTitle());
     }
 }
