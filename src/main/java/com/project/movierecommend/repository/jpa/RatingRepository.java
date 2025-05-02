@@ -1,4 +1,4 @@
-package com.project.movierecommend.repository;
+package com.project.movierecommend.repository.jpa;
 
 import com.project.movierecommend.domain.Rating;
 import org.springframework.data.jpa.repository.JpaRepository;
