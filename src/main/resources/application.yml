@@ -16,19 +16,31 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
-      group-id: movie-recommend-group     # Consumer Group ID
+      group-id: movie-group     # Consumer Group ID
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        spring.json.trusted.packages: '*'
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
+  elasticsearch:
+    uris: https://localhost:9200
+    username: elastic
+    password: sznrsjxoy7-s7dTkb08O
+
+
+
   data:
     elasticsearch:
+      repositories:
+        enabled: true
       client:
         reactive:
           endpoints: localhost:9200
+
 
 logging:
   level:
