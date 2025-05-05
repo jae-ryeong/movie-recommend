@@ -1,3 +1,7 @@
+DROP TABLE IF EXISTS movies;
+DROP TABLE IF EXISTS ratings;
+
+
 CREATE TABLE movies (
                         movie_id BIGINT PRIMARY KEY,
                         title VARCHAR(255),
