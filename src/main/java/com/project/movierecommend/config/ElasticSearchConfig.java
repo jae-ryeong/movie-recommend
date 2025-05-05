@@ -14,15 +14,15 @@ import java.security.cert.X509Certificate;
 @EnableElasticsearchRepositories
 public class ElasticSearchConfig extends ElasticsearchConfiguration {
 
-    private String host = "127.0.0.1";
-    private String username = "elastic";
-    private String password = "sznrsjxoy7-s7dTkb08O";
+    private final String host = "localhost:9200";
+    private final String username = "elastic";
+    private final String password = "sznrsjxoy7-s7dTkb08O";
 
     @Override
     public ClientConfiguration clientConfiguration() {
         return ClientConfiguration.builder()
                 .connectedTo(host)
-                .usingSsl(disableSslVerification(), allHostValid())
+                //.usingSsl(disableSslVerification(), allHostValid())
                 .withBasicAuth(username, password)
                 .build();
     }
