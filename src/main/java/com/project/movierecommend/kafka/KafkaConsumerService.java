@@ -1,6 +1,7 @@
 package com.project.movierecommend.kafka;
 
 import com.project.movierecommend.domain.MovieDocument;
+import com.project.movierecommend.domain.MovieEntity;
 import com.project.movierecommend.repository.elasticsearch.MovieSearchRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,7 +11,7 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class KafkaConsumerService {
+public class KafkaConsumerService { // 운영 중 실시간 데이터 수신 및 색인용 (Kafka → Elasticsearch)
     /*
      Kafka 토픽에서 메시지를 수신하고, 수신된 Movie 객체를 특정 리포지토리에 저장
      */
@@ -20,10 +21,17 @@ public class KafkaConsumerService {
         이 컨슈머가 리스닝(수신)할 Kafka 토픽의 이름을 지정, "movie-info" 토픽으로 전송된 메시지를 이 메소드가 받는다
         이 컨슈머가 속한 컨슈머 그룹의 ID를 지정
      */
-    @KafkaListener(topics = "movie-info", groupId = "movie-group")
-    public void consumeMovie(MovieDocument movieDocument) {
-        log.info("Consumed movie from Kafka: {}", movieDocument.getTitle());
-        movieSearchRepository.save(movieDocument);  //  Elasticsearch 인덱스에 문서를 저장
-        log.info("Indexed movie into Elasticsearch: {}", movieDocument.getTitle());
+    @KafkaListener(topics = "movie-info", groupId = "movie-group")  // 호출하지 않아도 Kafka에 메시지가 도착했을 때 자동으로 실행
+    public void consumeMovie(MovieEntity movieEntity) {
+        log.info("Consumed movie from Kafka: {}", movieEntity.getTitle());
+
+        MovieDocument document = new MovieDocument(
+                movieEntity.getMovieId(),
+                movieEntity.getTitle(),
+                movieEntity.getGenres()
+        );
+
+        movieSearchRepository.save(document);  //  Elasticsearch 인덱스에 문서를 저장
+        log.info("Indexed movie into Elasticsearch: {}", document.getTitle());
     }
 }

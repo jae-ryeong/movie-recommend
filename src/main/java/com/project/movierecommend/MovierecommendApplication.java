@@ -6,14 +6,13 @@ import org.springframework.data.elasticsearch.repository.config.EnableElasticsea
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 /*
-	1. 실행시 csv 파일의 데이터를 db에 저장
-	2. db에 저장된 영화 데이터를 Kafka 토픽으로 전송 (Producer)
-	3. Kafka 메시지 수신 후 Elasticsearch에 저장(색인) (Consumer)
+	1. 실행시 csv 파일의 데이터를 db에 저장 후 kafka 토픽으로 전송 (MovieLensCsvLoader -> MovieProducerRunner)
+	3. Kafka 메시지 수신 후 @KafkaListner에 의해 자동으로 Elasticsearch에 저장(색인) (Consumer) (KafkaProducerService)
  */
 
 @SpringBootApplication
-@EnableJpaRepositories("com.project.movierecommend.repository.jpa")
-@EnableElasticsearchRepositories("com.project.movierecommend.repository.elasticsearch")
+@EnableJpaRepositories("com.project.movierecommend.repository.jpa")	// JPA Repository가 위치한 패키지를 스캔
+@EnableElasticsearchRepositories("com.project.movierecommend.repository.elasticsearch") // Elasticsearch 전용 리포지토리 스캔
 public class MovierecommendApplication {
 
 	public static void main(String[] args) {
