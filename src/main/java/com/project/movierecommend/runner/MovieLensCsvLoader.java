@@ -3,9 +3,9 @@ package com.project.movierecommend.runner;
 import com.project.movierecommend.domain.MovieEntity;
 import com.project.movierecommend.domain.Rating;
 import com.project.movierecommend.repository.jpa.MovieEntityRepository;
-import com.project.movierecommend.repository.jpa.RatingRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
+@Order(1)
 @RequiredArgsConstructor
 public class MovieLensCsvLoader implements CommandLineRunner {
     /*
