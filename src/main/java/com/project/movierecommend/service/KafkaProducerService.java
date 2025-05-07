@@ -21,7 +21,7 @@ public class KafkaProducerService {
 
     // 색인된 데이터를 kafka로 전송
     public void sendMovie(MovieEntity movieEntity) {
-        log.info("Producing movie to Kafka: {}", movieEntity.getTitle());
         kafkaTemplate.send(TOPIC, movieEntity);
+        log.info("Sent movie info to kafka topic");
     }
 }

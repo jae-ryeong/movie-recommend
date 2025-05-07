@@ -22,25 +22,19 @@ spring:
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       properties:
         spring.json.trusted.packages: '*'
+      enable-auto-commit: true
+      max-poll-records: 500 # Number of messages to receive at once
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      batch-size: 16384  # Default 16KB, maximum size for one batch
+      linger-ms: 10      # Max linger time (ms) → Collect and send during this time
+      buffer-memory: 33554432  # 32MB buffer
 
   elasticsearch:
-    uris: https://localhost:9200
+    uris: http://localhost:9200
     username: elastic
     password: sznrsjxoy7-s7dTkb08O
-
-
-
-  data:
-    elasticsearch:
-      repositories:
-        enabled: true
-      client:
-        reactive:
-          endpoints: localhost:9200
-
 
 logging:
   level:
