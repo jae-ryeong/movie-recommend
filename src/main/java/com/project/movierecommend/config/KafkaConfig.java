@@ -1,7 +1,7 @@
 package com.project.movierecommend.config;
 
-import com.project.movierecommend.domain.MovieDocument;
 import com.project.movierecommend.domain.MovieEntity;
+import com.project.movierecommend.dto.UserActionDto;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.context.annotation.Bean;
@@ -36,5 +36,19 @@ public class KafkaConfig {
     public KafkaTemplate<String, MovieEntity> kafkaTemplate() {
         // 보통 <String, String>이지만 <String, Movie>로 타입을 지정해주면서 타입 안정성이 높아졌다.
         return new KafkaTemplate<>(producerFactory());
+    }
+
+    @Bean
+    public ProducerFactory<String, UserActionDto> userActionProducerFactory() {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        return new DefaultKafkaProducerFactory<>(configProps);
+    }
+
+    @Bean
+    public KafkaTemplate<String, UserActionDto> userActionKafkaTemplate() {
+        return new KafkaTemplate<>(userActionProducerFactory());
     }
 }
