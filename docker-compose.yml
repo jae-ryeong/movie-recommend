@@ -14,6 +14,7 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+        - ./database/init:/docker-entrypoint-initdb.d
     networks:
       - movierecommend_network
 
@@ -22,8 +23,9 @@ services:
     restart: always
     container_name: movierecommend_kafka
     environment:
-      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1 # kafka 싱글 브로커 환경
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+
     ports:
       - "9092:9092" # 내부에서 접근하기 위한 포트 연결
     depends_on:
@@ -41,15 +43,35 @@ services:
       - movierecommend_network
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.3
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.5.3
     restart: always
     container_name: movierecommend_elasticsearch
     environment:
-      discovery.type: single-node         # 단일 노드 클러스터로 실행되도록 설정, 개발/테스트 환경에 적합
-      ES_JAVA_OPTS: "-Xms512m -Xmx512m"   # Elasticsearch가 사용할 Java 힙 메모리 크기를 최소/최대 512MB로 설정
+      - node.name=es-node
+      - cluster.name=search-cluster
+      - discovery.type=single-node        # 단일 노드 클러스터로 실행되도록 설정, 개발/테스트 환경에 적합
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - xpack.security.enrollment.enabled=true
     ports:
       - "9200:9200"  # HTTP REST API 접근을 위한 포트호스트에서 localhost:9200으로 Elasticsearch에 접근 가능
       - "9300:9300"  # 노드 간 통신을 위한 Transport 포트(클러스터링 시 사용), 단일 노드에서는 필수는 아니지만 연결
+    networks:
+      - movierecommend_network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.7.1
+    restart: always
+    container_name: kibana
+    environment:
+      SERVER_NAME: kibana
+      ELASTICSEARCH_HOSTS: http://localhost:9200
+    ports:
+      - 5601:5601
+    # Elasticsearch Start Dependency
+    depends_on:
+      - elasticsearch
     networks:
       - movierecommend_network
 
