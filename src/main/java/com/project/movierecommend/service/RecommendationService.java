@@ -22,7 +22,7 @@ public class RecommendationService {
         List<UserAction> allActions = userActionRepository.findAll();
 
         // 2. 사용자별 영화 목록 구성
-        HashMap<Long, Set<Long>> userMovieMap = new HashMap<>();
+        HashMap<Long, Set<Long>> userMovieMap = new HashMap<>();    // 모든 사용자
         for (UserAction action : allActions) {
             // 기존 key 존재시 action.getMovieId()를 추가, key 없으면 새로운 HashSet을 생성하여 추가
             userMovieMap.computeIfAbsent(action.getUserId(), k -> new HashSet<>()).add(action.getMovieId());
@@ -30,7 +30,7 @@ public class RecommendationService {
 
         // 3. 현재 사용자가 본 영화 목록
         // userId가 본 영화 목록을 userMovieMap에서 가져오고, 없으면 빈 Set 할당
-        Set<Long> targetUserMovies = userMovieMap.getOrDefault(userId, Collections.emptySet());
+        Set<Long> targetUserMovies = userMovieMap.getOrDefault(userId, Collections.emptySet()); // 내가 본 영화
 
         // 4. 유사 사용자 찾기 (공통 영화 수가 많은 사용자)
         HashMap<Long, Integer> similarityMap = new HashMap<>();
