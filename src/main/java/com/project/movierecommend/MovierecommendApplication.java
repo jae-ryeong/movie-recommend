@@ -7,7 +7,9 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 /*
 	1. 실행시 csv 파일의 데이터를 db에 저장 후 kafka 토픽으로 전송 (MovieLensCsvLoader -> MovieProducerRunner)
-	3. Kafka 메시지 수신 후 @KafkaListner에 의해 자동으로 Elasticsearch에 저장(색인) (Consumer) (KafkaProducerService)
+	2. Kafka 메시지 수신 후 @KafkaListner에 의해 자동으로 Elasticsearch에 저장(색인) (Consumer) (KafkaProducerService)
+	---
+	3. REST API → Kafka Producer → Kafka Broker → Kafka Consumer → MySQL 저장
  */
 
 @SpringBootApplication
