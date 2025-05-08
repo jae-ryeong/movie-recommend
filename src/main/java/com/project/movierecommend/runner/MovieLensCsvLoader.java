@@ -3,6 +3,7 @@ package com.project.movierecommend.runner;
 import com.project.movierecommend.domain.MovieEntity;
 import com.project.movierecommend.domain.Rating;
 import com.project.movierecommend.repository.jpa.MovieEntityRepository;
+import com.project.movierecommend.service.KafkaProducerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
@@ -27,11 +28,20 @@ public class MovieLensCsvLoader implements CommandLineRunner {
     private final MovieEntityRepository movieEntityRepository;
     private final JdbcTemplate jdbcTemplate;
 
+    private final KafkaProducerService kafkaProducerService;
+
+    /*
+    앱 실행과 동시에 Kafka로 메시지를 보내서 "테스트 겸용"으로 사용 가능
+    Kafka가 꺼져있으면 에러가 발생하므로 환경 설정 체크도 가능
+     */
+
     @Override
     public void run(String... args) throws Exception {
         if (movieEntityRepository.count() == 0) {
             loadMovies();
             loadRatings();
+            movieEntityRepository.findAll()
+                    .forEach(kafkaProducerService::sendMovie);
         } else{
             System.out.println("DB에 영화 데이터가 이미 존재합니다. CSV 로딩 생략.");
         }
