@@ -1,6 +1,10 @@
 package com.project.movierecommend.service;
 
+import com.project.movierecommend.domain.MovieEntity;
+import com.project.movierecommend.domain.Rating;
 import com.project.movierecommend.domain.UserAction;
+import com.project.movierecommend.repository.jpa.MovieEntityRepository;
+import com.project.movierecommend.repository.jpa.RatingRepository;
 import com.project.movierecommend.repository.jpa.UserActionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,8 +20,11 @@ import java.util.*;
 public class RecommendationService {
 
     private final UserActionRepository userActionRepository;
+    private final MovieEntityRepository movieEntityRepository;
+    private final RatingRepository ratingRepository;
 
-    public List<Long> recommendMoviesForUser(Long userId, int limit) {
+    // 조회 영화 기반 협업 필터링
+    public List<Long> recommendByViewMovie(Long userId, int limit) {
         // 1. 전체 사용자 행동 조회
         List<UserAction> allActions = userActionRepository.findAll();
 
@@ -64,5 +71,98 @@ public class RecommendationService {
             }
         }
         return recommended.stream().limit(limit).toList();
+    }
+
+    // 평점 기반 협업 필터링
+    public List<MovieEntity> recommendByRatingSimilarity(Long targetUserId, int limit) {
+        // 1. 전체 평점 데이터
+        List<Rating> allRatings = ratingRepository.findAll();
+        // 2. 유저별 평점 맵
+        Map<Long, Map<Long, Float>> userRatingsMap = new HashMap<>();
+        for (Rating r : allRatings) {
+            userRatingsMap
+                    .computeIfAbsent(r.getUserId(), k -> new HashMap<>()) // 해당 유저 ID가 맵에 없으면 새 HashMap 생성
+                    .put(r.getMovieId(), r.getRating());                         // 해당 유저의 영화 ID와 평점 추가
+        }
+        // 3. 타겟 유저(자신) 평점
+        Map<Long, Float> targetRatings = userRatingsMap.get(targetUserId);
+        if (targetRatings == null) return Collections.emptyList();
+        // 4. 유사도 계산
+        Map<Long, Double> similarityScroes = new HashMap<>();
+        for (Map.Entry<Long, Map<Long, Float>> entry : userRatingsMap.entrySet()) {
+            Long otherUserId = entry.getKey();
+            if(otherUserId.equals(targetUserId)) continue;
+
+            double sim = cosineSimilarity(targetRatings, entry.getValue()); // 자신과 다른 유저의 유사도 계산
+
+            if (sim > 0.0) {    // 유사도가 0보다 큰 경우에만 유사도 맵에 저장
+                similarityScroes.put(otherUserId, sim);
+            }
+        }
+        System.out.println("similarityScroes.size() = " + similarityScroes.size());
+        // 5. 유사한 유저가 좋아한 영화 수집
+        Map<Long, Double> movieScoreMap = new HashMap<>();
+        for (Map.Entry<Long, Double> entry : similarityScroes.entrySet()) {     // 유사도 점수가 계산된 모든 유저
+            Long similarUserId = entry.getKey();
+            Double simScore = entry.getValue();   // 유사도 점수
+
+            // 해당 유사 유저의 평점 데이터
+            Map<Long, Float> similarUserRatings = userRatingsMap.get(similarUserId);
+
+            // 유사 유저가 평점을 매긴 모든 영화를 순회
+            for (Map.Entry<Long, Float> ratingEntry : similarUserRatings.entrySet()) {
+                Long movieId = ratingEntry.getKey();
+                if(targetRatings.containsKey(movieId)) continue;    // 이미 본 영화는 제외
+
+                /*
+                    - 해당 영화에 대한 예상 평점을 계산하여 누적
+                    - 예상 평점 = Sum (유사도 * 유사 유저의 해당 영화 평점)
+                    - merge 메소드는 키가 이미 존재하면 기존 값에 새 값을 더하고, 없으면 새 값을 추가
+                 */
+                movieScoreMap.merge(movieId, simScore * ratingEntry.getValue(), Double::sum);
+            }
+        }
+        // 6. 상위 영화 추천
+        return movieScoreMap.entrySet().stream()
+                .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())  // 누적 예상 평점(Value)을 기준으로 내림차순 정렬
+                .limit(limit)
+                .map(entry -> movieEntityRepository.findById(entry.getKey()).orElse(null))  // 영화 ID(Key)를 추출, 해당 ID로 MovieEntity를 조회
+                .filter(Objects::nonNull)   // 조회된 MovieEntity 중 null이 아닌 것만 필터링, DB에 없으면 제외
+                .toList();  // List 형태로 반환
+    }
+
+
+    /*
+     - 코사인 유사도 계산
+     - Long은 영화 ID, Float는 평점이나 선호도 점수
+     - 1에 가까울수록 유사하다
+     */
+    private double cosineSimilarity(Map<Long, Float> a, Map<Long, Float> b){
+        Set<Long> commonKeys = new HashSet<>(a.keySet());
+        commonKeys.retainAll(b.keySet());
+
+        // 공통키가 하나도 없다면 유사도 0
+        if (commonKeys.isEmpty()) return 0.0;
+
+        double dotProduct = 0.0;    // 두 벡터의 내적 (분자)
+        double normA = 0.0;         // 벡터 a의 크기의 제곱 (분모 계산시 사용)
+        double normB = 0.0;         // 벡터 b의 크기의 제곱 (분모 계산시 사용)
+
+        // 공통 키에 해당하는 값들로 내적 계산
+        for (Long key : commonKeys) {
+            dotProduct += a.get(key) * b.get(key);
+        }
+
+        for (float v : a.values()) normA += v * v;
+        for (float v : b.values()) normB += v * v;
+
+        /*
+            코사인 유사도 값을 계산하여 반환합니다.
+            공식: (A · B) / (||A|| * ||B||)
+            A · B 는 dotProduct
+            ||A|| 는 sqrt(normA)
+            ||B|| 는 sqrt(normB)
+         */
+        return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
     }
 }
