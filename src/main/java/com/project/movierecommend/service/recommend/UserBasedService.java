@@ -1,4 +1,4 @@
-package com.project.movierecommend.service;
+package com.project.movierecommend.service.recommend;
 
 import com.project.movierecommend.domain.MovieEntity;
 import com.project.movierecommend.domain.Rating;
@@ -17,7 +17,7 @@ import java.util.*;
  */
 @Service
 @RequiredArgsConstructor
-public class RecommendationService {
+public class UserBasedService {
 
     private final UserActionRepository userActionRepository;
     private final MovieEntityRepository movieEntityRepository;
@@ -73,7 +73,7 @@ public class RecommendationService {
         return recommended.stream().limit(limit).toList();
     }
 
-    // 평점 기반 협업 필터링
+    // User-based(평점) 기반 협업 필터링
     public List<MovieEntity> recommendByRatingSimilarity(Long targetUserId, int limit) {
         // 1. 전체 평점 데이터
         List<Rating> allRatings = ratingRepository.findAll();
@@ -131,6 +131,12 @@ public class RecommendationService {
                 .toList();  // List 형태로 반환
     }
 
+    //movieId만 뽑는 메서드
+    public List<Long> recommendMovieIds(Long userId, int limit) {
+        return recommendByRatingSimilarity(userId, limit).stream()
+                .map(MovieEntity::getMovieId)
+                .toList();
+    }
 
     /*
      - 코사인 유사도 계산
