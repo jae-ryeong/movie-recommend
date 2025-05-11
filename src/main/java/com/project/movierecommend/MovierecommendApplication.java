@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 	2. Kafka 메시지 수신 후 @KafkaListner에 의해 자동으로 Elasticsearch에 저장(색인) (Consumer) (KafkaProducerService)
 	---
 	3. REST API → Kafka Producer → Kafka Broker → Kafka Consumer → MySQL 저장
+	4. JPA로 추천 계산 -> Elasticsearch 저장 -> 사용자 요청 시 ES에서 조회
  */
 
 @SpringBootApplication

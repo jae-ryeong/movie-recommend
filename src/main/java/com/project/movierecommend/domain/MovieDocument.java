@@ -11,6 +11,7 @@ import org.springframework.data.elasticsearch.annotations.Document;
 @NoArgsConstructor
 @Getter
 public class MovieDocument {
+    // 영화 자체의 정보 저장
 
     @Id
     private Long movieId;
