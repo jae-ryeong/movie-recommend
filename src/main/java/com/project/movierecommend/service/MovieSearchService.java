@@ -1,6 +1,6 @@
 package com.project.movierecommend.service;
 
-import com.project.movierecommend.domain.MovieDocument;
+import com.project.movierecommend.domain.Elasticsearch.MovieDocument;
 import com.project.movierecommend.repository.elasticsearch.MovieSearchRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

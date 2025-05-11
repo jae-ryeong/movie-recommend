@@ -1,6 +1,6 @@
 package com.project.movierecommend.kafka;
 
-import com.project.movierecommend.domain.UserAction;
+import com.project.movierecommend.domain.Jpa.UserAction;
 import com.project.movierecommend.dto.UserActionDto;
 import com.project.movierecommend.repository.jpa.UserActionRepository;
 import lombok.RequiredArgsConstructor;

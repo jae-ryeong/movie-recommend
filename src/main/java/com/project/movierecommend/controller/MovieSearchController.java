@@ -1,6 +1,6 @@
 package com.project.movierecommend.controller;
 
-import com.project.movierecommend.domain.MovieDocument;
+import com.project.movierecommend.domain.Elasticsearch.MovieDocument;
 import com.project.movierecommend.service.MovieSearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

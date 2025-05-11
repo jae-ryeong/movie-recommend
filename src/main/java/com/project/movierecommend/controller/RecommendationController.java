@@ -1,6 +1,6 @@
 package com.project.movierecommend.controller;
 
-import com.project.movierecommend.domain.MovieEntity;
+import com.project.movierecommend.domain.Jpa.MovieEntity;
 import com.project.movierecommend.repository.elasticsearch.RecommendationSearchRepository;
 import com.project.movierecommend.repository.jpa.MovieEntityRepository;
 import com.project.movierecommend.service.recommend.ContentBasedService;

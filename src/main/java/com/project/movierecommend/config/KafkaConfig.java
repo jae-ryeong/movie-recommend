@@ -1,6 +1,6 @@
 package com.project.movierecommend.config;
 
-import com.project.movierecommend.domain.MovieEntity;
+import com.project.movierecommend.domain.Jpa.MovieEntity;
 import com.project.movierecommend.dto.UserActionDto;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;

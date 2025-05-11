@@ -1,6 +1,6 @@
 package com.project.movierecommend.repository.jpa;
 
-import com.project.movierecommend.domain.Rating;
+import com.project.movierecommend.domain.Jpa.Rating;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

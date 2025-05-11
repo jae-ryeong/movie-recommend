@@ -1,6 +1,6 @@
 package com.project.movierecommend.repository.jpa;
 
-import com.project.movierecommend.domain.MovieEntity;
+import com.project.movierecommend.domain.Jpa.MovieEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

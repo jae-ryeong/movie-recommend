@@ -1,4 +1,4 @@
-package com.project.movierecommend.domain;
+package com.project.movierecommend.domain.Elasticsearch;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

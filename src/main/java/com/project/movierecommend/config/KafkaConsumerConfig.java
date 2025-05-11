@@ -1,6 +1,6 @@
 package com.project.movierecommend.config;
 
-import com.project.movierecommend.domain.MovieEntity;
+import com.project.movierecommend.domain.Jpa.MovieEntity;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;

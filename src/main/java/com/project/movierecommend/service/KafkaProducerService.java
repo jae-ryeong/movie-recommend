@@ -1,6 +1,6 @@
 package com.project.movierecommend.service;
 
-import com.project.movierecommend.domain.MovieEntity;
+import com.project.movierecommend.domain.Jpa.MovieEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;

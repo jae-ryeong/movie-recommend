@@ -1,4 +1,4 @@
-package com.project.movierecommend.domain;
+package com.project.movierecommend.domain.Jpa;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

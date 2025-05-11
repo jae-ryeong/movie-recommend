@@ -1,7 +1,7 @@
 package com.project.movierecommend.runner;
 
-import com.project.movierecommend.domain.MovieEntity;
-import com.project.movierecommend.domain.Rating;
+import com.project.movierecommend.domain.Jpa.MovieEntity;
+import com.project.movierecommend.domain.Jpa.Rating;
 import com.project.movierecommend.repository.jpa.MovieEntityRepository;
 import com.project.movierecommend.service.KafkaProducerService;
 import lombok.RequiredArgsConstructor;

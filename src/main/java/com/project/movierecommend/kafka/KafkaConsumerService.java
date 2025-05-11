@@ -2,8 +2,8 @@ package com.project.movierecommend.kafka;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.project.movierecommend.domain.MovieDocument;
-import com.project.movierecommend.domain.MovieEntity;
+import com.project.movierecommend.domain.Elasticsearch.MovieDocument;
+import com.project.movierecommend.domain.Jpa.MovieEntity;
 import com.project.movierecommend.repository.elasticsearch.MovieSearchRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
