@@ -1,6 +1,7 @@
 package com.project.movierecommend.service.recommend;
 
 import com.project.movierecommend.domain.Elasticsearch.RecommendationDocument;
+import com.project.movierecommend.domain.Jpa.MovieEntity;
 import com.project.movierecommend.repository.elasticsearch.RecommendationSearchRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,7 +19,7 @@ public class HybridRecommendationIndexer {
     private final ContentBasedService contentBasedService;
     private final UserBasedService userBasedService;
 
-    // TODO: 차후 평점 저장시(실시간) 호출하거나 배치 작업으로 주기적 실행 하도록 구현 예정
+    // 실시간 한 명의 유저 추천 메서드
     public void indexHybridRecommendation(Long userId) {
         // 1. 추천 결과 생성
         List<Long> cosIds = userBasedService.recommendMovieIds(userId, 5);
@@ -36,5 +37,31 @@ public class HybridRecommendationIndexer {
         );
 
         recommendationSearchRepository.save(doc);
+    }
+
+    // 전체 배치 작업으로 추천 메서드
+    public List<RecommendationDocument> buildHybridDocs(List<Long> userIds) {
+        List<RecommendationDocument> docs = new ArrayList<>();
+
+        for (Long userId : userIds) {
+            List<Long> cosIds = userBasedService.recommendMovieIds(userId, 5);
+            List<Long> contentIds = contentBasedService.recommendMovieIds(userId, 5);
+
+            Set<Long> merged = new LinkedHashSet<>();
+            merged.addAll(cosIds);
+            merged.addAll(contentIds);
+
+            RecommendationDocument doc = new RecommendationDocument(
+                    userId,
+                    new ArrayList<>(merged)
+            );
+            docs.add(doc);
+        }
+        return docs;
+    }
+
+    public void indexHybridRecommendationsBulk(List<Long> userIds) {
+        List<RecommendationDocument> documents = buildHybridDocs(userIds);
+        recommendationSearchRepository.saveAll(documents); // Bulk 삽입
     }
 }
