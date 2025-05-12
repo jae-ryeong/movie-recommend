@@ -4,8 +4,8 @@ import com.project.movierecommend.domain.Jpa.MovieEntity;
 import com.project.movierecommend.domain.Jpa.Rating;
 import com.project.movierecommend.domain.Jpa.UserAction;
 import com.project.movierecommend.repository.jpa.MovieEntityRepository;
-import com.project.movierecommend.repository.jpa.RatingRepository;
 import com.project.movierecommend.repository.jpa.UserActionRepository;
+import com.project.movierecommend.runner.RecommendationPreloader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +22,7 @@ public class UserBasedService {
 
     private final UserActionRepository userActionRepository;
     private final MovieEntityRepository movieEntityRepository;
-    private final RatingRepository ratingRepository;
+    private final RecommendationPreloader recommendationPreloader;
 
     // 조회 영화 기반 협업 필터링
     public List<Long> recommendByViewMovie(Long userId, int limit) {
@@ -76,54 +76,48 @@ public class UserBasedService {
 
     // User-based(평점) 기반 협업 필터링
     public List<MovieEntity> recommendByRatingSimilarity(Long targetUserId, int limit) {
-        // 1. 전체 평점 데이터
-        List<Rating> allRatings = ratingRepository.findAll();
-        // 2. 유저별 평점 맵
-        Map<Long, Map<Long, Float>> userRatingsMap = new HashMap<>();
-        for (Rating r : allRatings) {
-            userRatingsMap
-                    .computeIfAbsent(r.getUserId(), k -> new HashMap<>()) // 해당 유저 ID가 맵에 없으면 새 HashMap 생성
-                    .put(r.getMovieId(), r.getRating());                         // 해당 유저의 영화 ID와 평점 추가
-        }
-        // 3. 타겟 유저(자신) 평점
-        Map<Long, Float> targetRatings = userRatingsMap.get(targetUserId);
+        // 전체 유저의 평점 데이터 (캐시된 것)
+        Map<Long, List<Rating>> ratingsMap = recommendationPreloader.getRatingsByUser();
+
+        // 타겟 유저(자신) 평점 데이터 (Map)
+        Map<Long, Float> targetRatings = toRatingMap(ratingsMap.get(targetUserId));
         if (targetRatings == null) return Collections.emptyList();
-        // 4. 유사도 계산
+
+        // 타겟 유저와 다른 유저들의 유사도 계산
         Map<Long, Double> similarityScroes = new HashMap<>();
-        for (Map.Entry<Long, Map<Long, Float>> entry : userRatingsMap.entrySet()) {
+        for (Map.Entry<Long, List<Rating>> entry : ratingsMap.entrySet()) {
             Long otherUserId = entry.getKey();
             if(otherUserId.equals(targetUserId)) continue;
 
-            double sim = cosineSimilarity(targetRatings, entry.getValue()); // 자신과 다른 유저의 유사도 계산
+            Map<Long, Float> otherRatings = toRatingMap(entry.getValue());
+            double sim = cosineSimilarity(targetRatings, otherRatings); // 자신과 다른 유저의 유사도 계산
 
             if (sim > 0.0) {    // 유사도가 0보다 큰 경우에만 유사도 맵에 저장
                 similarityScroes.put(otherUserId, sim);
             }
         }
 
-        // 5. 유사한 유저가 좋아한 영화 수집
+        // 유사 유저들의 평점을 기반으로 영화 점수 누적
         Map<Long, Double> movieScoreMap = new HashMap<>();
         for (Map.Entry<Long, Double> entry : similarityScroes.entrySet()) {     // 유사도 점수가 계산된 모든 유저
             Long similarUserId = entry.getKey();
             Double simScore = entry.getValue();   // 유사도 점수
 
-            // 해당 유사 유저의 평점 데이터
-            Map<Long, Float> similarUserRatings = userRatingsMap.get(similarUserId);
-
-            // 유사 유저가 평점을 매긴 모든 영화를 순회
-            for (Map.Entry<Long, Float> ratingEntry : similarUserRatings.entrySet()) {
-                Long movieId = ratingEntry.getKey();
-                if(targetRatings.containsKey(movieId)) continue;    // 이미 본 영화는 제외
+            Map<Long, Float> similarUserRatings = toRatingMap(ratingsMap.get(similarUserId));
+            for (Map.Entry<Long, Float> ratingsEntry : similarUserRatings.entrySet()) {
+                Long movieId = ratingsEntry.getKey();
+                if(targetRatings.containsKey(movieId)) continue;
 
                 /*
                     - 해당 영화에 대한 예상 평점을 계산하여 누적
                     - 예상 평점 = Sum (유사도 * 유사 유저의 해당 영화 평점)
                     - merge 메소드는 키가 이미 존재하면 기존 값에 새 값을 더하고, 없으면 새 값을 추가
                  */
-                movieScoreMap.merge(movieId, simScore * ratingEntry.getValue(), Double::sum);
+                movieScoreMap.merge(movieId, simScore * ratingsEntry.getValue(), Double::sum);
             }
         }
-        // 6. 상위 영화 추천
+
+        // 상위 영화 추천
         Set<Long> recommendedMovieIds = movieScoreMap.entrySet().stream()
                 .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
                 .limit(limit)
@@ -131,14 +125,6 @@ public class UserBasedService {
                 .collect(Collectors.toSet());
 
         return movieEntityRepository.findAllById(recommendedMovieIds);
-
-
-/*        return movieScoreMap.entrySet().stream()
-                .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())  // 누적 예상 평점(Value)을 기준으로 내림차순 정렬
-                .limit(limit)
-                .map(entry -> movieEntityRepository.findById(entry.getKey()).orElse(null))  // 영화 ID(Key)를 추출, 해당 ID로 MovieEntity를 조회
-                .filter(Objects::nonNull)   // 조회된 MovieEntity 중 null이 아닌 것만 필터링, DB에 없으면 제외
-                .toList();  // List 형태로 반환*/
     }
 
     //movieId만 뽑는 메서드
@@ -180,5 +166,13 @@ public class UserBasedService {
             ||B|| 는 sqrt(normB)
          */
         return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+    }
+
+    private Map<Long, Float> toRatingMap(List<Rating> ratings) {
+        if (ratings == null) return null;
+        return ratings.stream().collect(Collectors.toMap(
+                Rating::getMovieId,
+                Rating::getRating
+        ));
     }
 }

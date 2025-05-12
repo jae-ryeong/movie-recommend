@@ -2,55 +2,45 @@ package com.project.movierecommend.service.recommend;
 
 import com.project.movierecommend.domain.Jpa.MovieEntity;
 import com.project.movierecommend.domain.Jpa.Rating;
-import com.project.movierecommend.repository.jpa.MovieEntityRepository;
-import com.project.movierecommend.repository.jpa.RatingRepository;
+import com.project.movierecommend.runner.RecommendationPreloader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ContentBasedService {
 
-    private final RatingRepository ratingRepository;
-    private final MovieEntityRepository movieEntityRepository;
+    private final RecommendationPreloader recommendationPreloader;
 
-    // 캐시된 전체 영화 목록 (동시성 안전)
-    private List<MovieEntity> cachedAllMovies = null;
+    public List<MovieEntity> recommendByContent(Long userId, int limit) {
+        List<Rating> likedRatings = recommendationPreloader.getLikedRatingsByUser(userId);
+        if (likedRatings.isEmpty()) return Collections.emptyList();
 
-    public List<MovieEntity> recommendByContent(Long userId, int limit){
-        if (cachedAllMovies == null) {
-            cachedAllMovies = movieEntityRepository.findAll();
-        }
-
-        // 내가 평가한 영화 중 평점 4.0 이상 영화 목록 조회
-        List<Rating> likedRatings  = ratingRepository.findByUserIdAndRatingGreaterThan(userId, 4.0f);
-        if(likedRatings.isEmpty()) return Collections.emptyList();
-
-        // 내가 본 영화 ID 목록 추출
-        Set<Long> likedMovieIds = likedRatings.stream()
+        Set<Long> seenMovieIds = likedRatings.stream()
                 .map(Rating::getMovieId)
                 .collect(Collectors.toSet());
 
-        // 영화 정보를 한번에 조회
-        List<MovieEntity> likedMovies = movieEntityRepository.findAllById(likedMovieIds);
+        List<MovieEntity> likedMovies = recommendationPreloader.getCachedAllMovies().stream()
+                .filter(m -> seenMovieIds.contains(m.getMovieId()))
+                .toList();
 
-        // 장르 수집
         Set<String> preferredGenres = likedMovies.stream()
                 .flatMap(movie -> Arrays.stream(movie.getGenres().split("\\|")))
                 .collect(Collectors.toSet());
 
-        // 전체 영화에서 필터링
-        return cachedAllMovies.stream()
-                .filter(movie -> !likedMovieIds.contains(movie.getMovieId()))
+        return recommendationPreloader.getCachedAllMovies().stream()
+                .filter(movie -> !seenMovieIds.contains(movie.getMovieId()))
                 .filter(movie -> preferredGenres.stream()
                         .anyMatch(genre -> movie.getGenres().contains(genre)))
                 .limit(limit)
                 .toList();
     }
-
     public List<Long> recommendMovieIds(Long userId, int limit) {
         return recommendByContent(userId, limit).stream()
                 .map(MovieEntity::getMovieId)
