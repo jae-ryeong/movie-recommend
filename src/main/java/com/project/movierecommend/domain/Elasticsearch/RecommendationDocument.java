@@ -6,7 +6,6 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Document(indexName = "user-recommendations")
@@ -19,6 +18,4 @@ public class RecommendationDocument {
     private Long userId;
 
     private List<Long> recommendedMovieIds;
-
-    private LocalDateTime createdAt;
 }
