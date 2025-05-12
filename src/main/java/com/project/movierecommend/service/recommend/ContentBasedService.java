@@ -17,7 +17,14 @@ public class ContentBasedService {
     private final RatingRepository ratingRepository;
     private final MovieEntityRepository movieEntityRepository;
 
+    // 캐시된 전체 영화 목록 (동시성 안전)
+    private List<MovieEntity> cachedAllMovies = null;
+
     public List<MovieEntity> recommendByContent(Long userId, int limit){
+        if (cachedAllMovies == null) {
+            cachedAllMovies = movieEntityRepository.findAll();
+        }
+
         // 내가 평가한 영화 중 평점 4.0 이상 영화 목록 조회
         List<Rating> likedRatings  = ratingRepository.findByUserIdAndRatingGreaterThan(userId, 4.0f);
         if(likedRatings.isEmpty()) return Collections.emptyList();
@@ -35,13 +42,8 @@ public class ContentBasedService {
                 .flatMap(movie -> Arrays.stream(movie.getGenres().split("\\|")))
                 .collect(Collectors.toSet());
 
-        // 유저가 본 영화 ID들 (중복 제외)
-
-        // 전체 영화 조회
-        List<MovieEntity> allMovies = movieEntityRepository.findAll();
-
         // 전체 영화에서 필터링
-        return allMovies.stream()
+        return cachedAllMovies.stream()
                 .filter(movie -> !likedMovieIds.contains(movie.getMovieId()))
                 .filter(movie -> preferredGenres.stream()
                         .anyMatch(genre -> movie.getGenres().contains(genre)))
