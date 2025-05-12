@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /*
     1. 사용자 행동 데이터를 기반으로 간단한 유사도 계산 (공통 영화 수)
@@ -99,7 +100,7 @@ public class UserBasedService {
                 similarityScroes.put(otherUserId, sim);
             }
         }
-        System.out.println("similarityScroes.size() = " + similarityScroes.size());
+
         // 5. 유사한 유저가 좋아한 영화 수집
         Map<Long, Double> movieScoreMap = new HashMap<>();
         for (Map.Entry<Long, Double> entry : similarityScroes.entrySet()) {     // 유사도 점수가 계산된 모든 유저
@@ -123,12 +124,21 @@ public class UserBasedService {
             }
         }
         // 6. 상위 영화 추천
-        return movieScoreMap.entrySet().stream()
+        Set<Long> recommendedMovieIds = movieScoreMap.entrySet().stream()
+                .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
+                .limit(limit)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
+
+        return movieEntityRepository.findAllById(recommendedMovieIds);
+
+
+/*        return movieScoreMap.entrySet().stream()
                 .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())  // 누적 예상 평점(Value)을 기준으로 내림차순 정렬
                 .limit(limit)
                 .map(entry -> movieEntityRepository.findById(entry.getKey()).orElse(null))  // 영화 ID(Key)를 추출, 해당 ID로 MovieEntity를 조회
                 .filter(Objects::nonNull)   // 조회된 MovieEntity 중 null이 아닌 것만 필터링, DB에 없으면 제외
-                .toList();  // List 형태로 반환
+                .toList();  // List 형태로 반환*/
     }
 
     //movieId만 뽑는 메서드
