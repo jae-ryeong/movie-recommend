@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class RecommendationPreloader {
-
+    // 데이터를 미리 캐싱
     @Getter
     private Map<Long, List<Rating>> ratingsByUser;
     @Getter
@@ -27,7 +27,7 @@ public class RecommendationPreloader {
     private final RatingRepository ratingRepository;
     private final MovieEntityRepository movieEntityRepository;
 
-    @PostConstruct
+    @PostConstruct // Bean 초기화 완료 후 자동으로 실행
     public void init() {
         List<Rating> allRatings = ratingRepository.findAll();
 
